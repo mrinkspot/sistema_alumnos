@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+<html>
+    {% block body %}
+    <h2 class="text-center">Bienvenidos al Sistema de Alumnos</h2>
+    <hr>
+    <div class="col-3 m-auto">
+        <ul class="list-group text-center">
+            <li class="list-group-item"><b><a href="{{url_for('mostrar_listado_alumnos')}}">Listar Alumnos</a></b></li>
+            <li class="list-group-item"><b><a href="{{url_for('buscar_alumno')}}">Buscar Alumno por Padrón</a></b></li>
+            <li class="list-group-item"><b><a href="{{url_for('nuevo_alumno')}}">Nuevo Alumno</a></b></li>
+        </ul>
+    </div>
+    {% endblock %}
+</html>

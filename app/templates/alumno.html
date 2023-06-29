@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+<html>
+
+    {% block title %} Alumno {{alumno_buscado.padron}} {% endblock %}
+
+    {% block body %}
+    <h3 class="text-center">&bull; Datos del alumno buscado &bull; </h3>
+    <div class="col-3 m-auto">
+        <ul class="list-group text-center">
+            <li class="list-group-item"><b>Padron:</b> {{alumno_buscado.padron}}</li>
+            <li class="list-group-item"><b>Nombre:</b> {{alumno_buscado.nombre}}</li>
+            <li class="list-group-item"><b>Apellido:</b> {{alumno_buscado.apellido}}</li>
+            <li class="list-group-item"><b>Email:</b> {{alumno_buscado.email}}</li>
+        </ul>
+    </div>
+    {% endblock %}
+</html>

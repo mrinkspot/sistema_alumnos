@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+<html>
+    {% block title %}Listado de Alumnos{% endblock %}
+
+        {% block body %}
+        
+        <h3 class="text-center">&bull; Listado de Alumnos &bull;</h3>
+        <table class="table col-8 m-auto">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th class="col-1">Id</th>
+                    <th class="col-3">Nombre</th>
+                </tr>
+            </thead>
+                
+            <tbody id="tabla-materias"></tbody>
+        </table>
+        {% endblock %}
+</html>
+        
+    {% block scripts %}
+            <script>
+                window.addEventListener('load', function() {
+                    fetch('/get_materias')
+                    .then(response => response.json())
+                    .then(data => {
+                        const tablaMaterias = document.getElementById('tabla-materias');
+                        data.materias.forEach(materia => {
+                            const row = document.createElement('tr');
+                            
+                            const idCell = document.createElement('td');
+                            idCell.textContent = materia.id;
+                            row.appendChild(idCell);
+                            
+                            const nombreCell = document.createElement('td');
+                            nombreCell.textContent = materia.nombre;
+                            row.appendChild(nombreCell);
+                            
+                            tablaMaterias.appendChild(row);
+                        });
+                    });
+            });
+        </script>
+    {% endblock %}

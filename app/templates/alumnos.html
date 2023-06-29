@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+<html>
+    {% block title %}Listado de Alumnos{% endblock %}
+
+        {% block body %}
+        <h3 class="text-center">&bull; Listado de Alumnos &bull;</h3>
+        <table class="table col-8 m-auto">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th class="col-1">Padrón</th>
+                    <th class="col-3">Nombre</th>
+                    <th class="col-3">Apellido</th>
+                    <th class="col-3">Email</th>
+                    <th class="col-3">Acciones</th>
+                </tr>
+            </thead>
+                
+            {% for alumno in lista_alumnos %}
+            <tr>
+                    <td>{{ alumno.padron }}</td>
+                    <td class="text-center">{{ alumno.nombre }}</td>
+                    <td class="text-center">{{ alumno.apellido }}</td>
+                    <td class="text-center">{{ alumno.email }}</td>
+                    <td class="row d-flex justify-content-center"> 
+                        <a href="{{url_for("modificar", padron=alumno.padron)}}"><i class="fa-solid fa-pen-to-square"></i></a>
+                        <!-- <a class="col-2" style="color: red;" href="{{ url_for('eliminar', padron=alumno.padron) }}">
+                            <i class="fas fa-trash"></i>
+                        </a> -->
+                        <a class="col-2" style="color: red;" value="{{alumno.padron}}" onclick="eliminarAlumno({{alumno.padron}})">
+                            <i class="fas fa-trash"></i>
+                        </a>                          
+                    </td>
+            {% endfor %}
+            </tr>
+        </table>
+        {% endblock %}
+</html>
+
+{% block scripts %}
+<script>
+    // function eliminarAlumno(padron) {
+    //     if (confirm("¿Estás seguro de que deseas eliminar este alumno?")) {
+    //         fetch(`/eliminar/${padron}`, {
+    //             method: 'DELETE'
+    //         })
+    //             // .then(response => response.json())
+    //             // .then(data => {
+    //             // if ('message' in data) {
+    //             //     alert(data.message);
+    //             //     window.location.reload();
+    //             // } else {
+    //             //     alert(data.error);
+    //             // }
+    //             // })
+    //             .catch(error => {
+    //                 // Error de red u otro error
+    //                 console.error(error);
+    //                 alert('Error al eliminar el alumno');
+    //             });
+    //     }
+    // }
+
+    function eliminarAlumno(padron) {
+        if (confirm("¿Estás seguro de que deseas eliminar este alumno?")) {
+            fetch(`/eliminar/${padron}`, {
+            method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+            if ('message' in data) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert(data.error);
+            }
+            })
+            .catch(error => {
+                // Error de red u otro error
+                console.error(error);
+                alert('Error al eliminar el alumno');
+            });
+        }
+    }
+</script>
+{% endblock %}

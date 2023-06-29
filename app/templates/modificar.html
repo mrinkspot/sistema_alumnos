@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+<html>
+    
+    {% block title %} Modificación del Alumno {{alumno_modificar.padron}} {% endblock %}
+    
+    {% block body %}
+        <h1> Modificar Alumno </h1>
+        {{ wtf.quick_form(form) }}
+    {% endblock %}
+</html>
