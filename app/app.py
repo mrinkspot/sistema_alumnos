@@ -39,7 +39,11 @@ class Materia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     descripcion = db.Column(db.String(50), nullable=False)
 
-    # cursadas = db.relationship('Cursada', backref='alumno')
+    def serialize(self):
+        return {
+            'id': self.id,
+            'descripcion': self.descripcion
+        }
 
 class Cursada(db.Model): # tabla de relacion materia-alumno
     __tablename__ = "Cursadas"
@@ -128,10 +132,8 @@ def obtener_materias_inscriptas(alumno_padron):
 @app.route('/get_materias', methods=['GET'])
 def obtener_materias():
     materias = Materia.query.all()
-
-    materias = [materia.serialize() for materia in materias]
-
-    return jsonify(materias=materias)
+    materias_serializadas = [materia.serialize() for materia in materias]
+    return jsonify(materias=materias_serializadas)
 
 @app.route('/materias', methods=['GET'])
 def ver_materias():
