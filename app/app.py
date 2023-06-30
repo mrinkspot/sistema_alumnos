@@ -64,61 +64,14 @@ class Cursada(db.Model): # tabla de relacion materia-alumno
 #     db.create_all()
 
 # Exclusivo para rol Alumno
-@app.route('/inscripcion', methods=['POST'])
-def inscripcion():
-    data = request.json
-    alumno_padron = data.get('alumno_padron')
-    materia_id = data.get('materia_id')
-
-    if not alumno_padron:
-        return jsonify({'error': 'Alumno no encontrado.'}), 400
-    
-    if not materia_id:
-        return jsonify({'error': 'Materia no encontrada.'}), 400
+@app.route('/inscripcion', methods=['GET'])
+def mostrar_inscripcion():
+    return render_template('inscripcion.html')
 
 
-    alumno = Alumno.query.get_or_404(alumno_padron)
-    materia = Materia.query.get_or_404(materia_id)
-
-    if alumno in materia.alumnos:
-        return jsonify({'message': 'El alumno ya está inscrito en esta materia.'}), 200
-
-    cursada = Cursada(alumno=alumno, materia=materia)
-    db.session.add(cursada)
-    db.session.commit()
-
-    return jsonify({'message': 'Inscripción exitosa.'}), 200
-
-
-# Exclusivo para rol Docente
-@app.route('/cargar_nota', methods=['POST'])
-def cargar_nota():
-    data = request.json
-    alumno_padron = data.get('alumno_padron')
-    materia_id = data.get('materia_id')
-    nota = data.get('nota')
-
-    if not alumno_padron:
-        return jsonify({'error': 'Alumno no encontrado.'}), 400
-    
-    if not materia_id:
-        return jsonify({'error': 'Materia no encontrada.'}), 400
-        
-    if nota is None:
-        return jsonify({'error': 'Se debe especificar una nota.'}), 400
-
-    alumno = Alumno.query.get_or_404(alumno_padron)
-    materia = Materia.query.get_or_404(materia_id)
-
-    cursada = Cursada.query.filter_by(alumno=alumno, materia=materia).first()
-    if not cursada:
-        return jsonify({'error': 'El alumno no está inscrito en esta materia.'}), 404
-
-    cursada.nota = nota
-    db.session.commit()
-
-    return jsonify({'message': 'Nota cargada exitosamente.'}), 200
-
+@app.route('/notas', methods=['GET'])
+def mostrar_notas():
+    return render_template('notas.html')
 
 @app.route('/alumno/<int:alumno_padron>/materias', methods=['GET'])
 def obtener_materias_inscriptas(alumno_padron):
@@ -247,6 +200,60 @@ def mostrar_alumno(padron):
     if not alumno_buscado:
         return abort(404)
     return render_template("alumno.html", alumno_buscado=alumno_buscado)
+
+@app.route('/inscribir_api', methods=['POST'])
+def inscribir_api():
+    data = request.json
+    alumno_padron = data.get('alumno_padron')
+    materia_id = data.get('materia_id')
+
+    if not alumno_padron:
+        return jsonify({'error': 'Alumno no encontrado.'}), 400
+    
+    if not materia_id:
+        return jsonify({'error': 'Materia no encontrada.'}), 400
+
+    alumno = Alumno.query.get_or_404(alumno_padron)
+    materia = Materia.query.get_or_404(materia_id)
+
+    cursada_existente = Cursada.query.filter_by(alumno=alumno, materia=materia).first()
+    if cursada_existente:
+        return jsonify({'message': 'El alumno ya está inscrito en esta materia.'}), 200
+
+    cursada = Cursada(alumno=alumno, materia=materia)
+    db.session.add(cursada)
+    db.session.commit()
+
+    return jsonify({'message': 'Inscripción exitosa.'}), 200
+
+
+@app.route('/cargar_notas_api', methods=['POST'])
+def cargar_notas_api():
+    data = request.json
+    alumno_padron = data.get('alumno_padron')
+    materia_id = data.get('materia_id')
+    nota = data.get('nota')
+
+    if not alumno_padron:
+        return jsonify({'error': 'Alumno no encontrado.'}), 400
+    
+    if not materia_id:
+        return jsonify({'error': 'Materia no encontrada.'}), 400
+        
+    if nota is None:
+        return jsonify({'error': 'Se debe especificar una nota.'}), 400
+
+    alumno = Alumno.query.get_or_404(alumno_padron)
+    materia = Materia.query.get_or_404(materia_id)
+
+    cursada = Cursada.query.filter_by(alumno=alumno, materia=materia).first()
+    if not cursada:
+        return jsonify({'error': 'El alumno no está inscrito en esta materia.'}), 404
+
+    cursada.nota = nota
+    db.session.commit()
+
+    return jsonify({'message': 'Nota cargada exitosamente.'}), 200
 
 if __name__ == '__main__': # Comprobamos que, si estamos en el archivo principal (main), entonces ejecutamos la aplicación
     app.run(debug=True) # el método run ejecuta la aplicación Flask

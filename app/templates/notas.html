@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+<html>
+
+{% block title %} Cargar Nota {% endblock %}
+
+{% block body %}
+<h1>Cargar Nota</h1>
+<form id="notaForm">
+    <label for="alumno_padron">Padrón del Alumno:</label>
+    <input type="text" name="alumno_padron" id="alumno_padron" required>
+    <br>
+    <label for="materia_id">Materia:</label>
+    <select name="materia_id" id="materia_id" required>
+        <option value="">Seleccione una materia</option>
+    </select>
+    <br>
+    <label for="nota">Nota:</label>
+    <input type="number" name="nota" id="nota" min="1" max="10" required>
+    <br>
+    <button type="submit">Cargar Nota</button>
+</form>
+
+<div id="message"></div>
+{% endblock %}
+
+</html>
+
+{% block scripts %}
+<script>
+
+    function cargarMaterias() {
+        fetch('/get_materias')
+            .then(function (response) {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Error al cargar las materias.');
+                }
+            })
+            .then(function (data) {
+                var select = document.getElementById("materia_id");
+                select.innerHTML = '';
+
+                data.materias.forEach(function (materia) {
+                    var option = document.createElement("option");
+                    option.value = materia.id;
+                    option.text = materia.descripcion;
+                    select.appendChild(option);
+                });
+            })
+            .catch(function (error) {
+                console.error(error);
+            });
+    }
+
+
+    // Cargar las materias al cargar la página
+    $(document).ready(function () {
+        cargarMaterias();
+    });
+
+    document.getElementById("notaForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        fetch("/cargar_notas_api", {
+            method: "POST",
+            body: JSON.stringify(Object.fromEntries(formData)),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("message").textContent = data.message;
+            })
+            .catch(error => {
+                document.getElementById("message").textContent = "Error al cargar la nota.";
+                console.error("Error:", error);
+            });
+    });
+</script>
+{% endblock %}
