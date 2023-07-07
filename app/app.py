@@ -3,20 +3,30 @@ from flask import render_template
 from flask import g
 from flask import abort
 from flask import session
+from sqlalchemy.exc import IntegrityError
+
 
 from flask_bootstrap import Bootstrap
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from NombreForm import NombreForm
 from FormBusqueda import FormBusqueda
 from FormAlta import FormAlta
+from FormLogin import FormLogin
+from FormRegistro import FormRegistro
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_login import *
 
 from FormModificacion import FormModificacion
 
 app = Flask(__name__) # Creamos una instancia de Flask, es decir, inicializando la app
 bootstrap = Bootstrap(app)
+
+login_manager = LoginManager() # Para asociar la funcionalidad de autenticación y gestión de usuarios con la app Flask (inicio de sesión, cierre de sesión, gestión de sesiones, protección de rutas...)
+login_manager.init_app(app)
+
 
 # Configuraciones
 app.config['SECRET_KEY'] = 'patatasconquesodepapas'
@@ -56,6 +66,21 @@ class Cursada(db.Model): # tabla de relacion materia-alumno
     alumno = db.relationship('Alumno', backref='cursadas')
     materia = db.relationship('Materia', backref='cursadas')
 
+# ==== LOGIN CLASSES ====
+class Usuario(UserMixin, db.Model): # User Model
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(64), unique=True)
+    nombre_usuario = db.Column(db.String(64), unique=True)
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 
 # # Definimos que, en contexto de la aplicación, se creen todas las tablas que no hayan sido creadas
@@ -107,6 +132,8 @@ def nombre():
 
 @app.route('/')
 def index():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     return render_template("index.html")
 
 @app.route('/nuevo', methods=['GET', 'POST'])
@@ -188,11 +215,15 @@ def eliminar(padron):
 
 @app.route('/alumnos')
 def mostrar_listado_alumnos():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     alumnos = Alumno.query.all() # SELECT * FROM Alumnos
     return render_template('alumnos.html', lista_alumnos=alumnos)
 
 @app.route('/alumno/<int:padron>')
 def mostrar_alumno(padron):
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     # Buscamos el alumno por padrón, devolvemos None si el mismo no se encuentra
     
     alumno_buscado = Alumno.query.get(padron)
@@ -254,6 +285,58 @@ def cargar_notas_api():
     db.session.commit()
 
     return jsonify({'message': 'Nota cargada exitosamente.'}), 200
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
+
+# ==== LOGIN / REGISTRO VIEW FUNCTIONS ====
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # Verificar si el usuario ya está autenticado
+    if request.method == "GET":
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+
+    form = FormLogin()
+
+    if request.method == "POST":
+        if form.validate_on_submit():
+            user = Usuario.query.filter_by(email=form.email.data).first()
+            if user is not None and user.verify_password(form.password.data):
+                login_user(user, form.remember_me.data) # de Flask-Login. Establece la sesión del usuario para rastrear y gestionar la identidad del mismo.
+                return redirect(url_for('index'))
+        flash('Error al iniciar sesión')
+
+    return render_template('login.html', form=form)
+
+@app.route('/registro', methods=['GET', 'POST'])
+def register():
+    form = FormRegistro()
+
+    if request.method == "POST":
+        if form.validate_on_submit():
+            user = Usuario(email=form.email.data,
+            nombre_usuario=form.username.data,
+            password=form.password.data)
+            db.session.add(user)
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                flash('Ya existe un Usuario con esas credenciales')
+                return render_template('registro.html', form=form)
+            flash('Ya podés ingresar al sistema.')
+            return redirect(url_for('login'))
+
+    return render_template('registro.html', form=form)
+
+@app.route('/logout')
+@login_required # Sólo usuarios autenticados pueden acceder a esta ruta
+def logout(): 
+    logout_user() # de Flask-Login. Elimina la sesión y cualquier información asociada al usuario actual
+    flash('Se ha cerrado la sesión.')
+    return redirect(url_for('login'))
 
 if __name__ == '__main__': # Comprobamos que, si estamos en el archivo principal (main), entonces ejecutamos la aplicación
     app.run(debug=True) # el método run ejecuta la aplicación Flask
